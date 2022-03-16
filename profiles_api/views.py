@@ -1,8 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import viewsets
+from rest_framework.authentication import TokenAuthentication
 
 from profiles_api import serializers
+from profiles_api import models
+from profiles_api import permissions
 
 class HelloApiView(APIView):
   """Test Api View"""
@@ -66,3 +70,58 @@ class TestApiView(APIView):
     ]
 
     return Response({'message': 'Hello!', 'an_apiview': an_apiview})
+
+class HelloViewSet(viewsets.ViewSet):
+  """
+  Test API Viewset
+  """
+  serializer_class = serializers.HelloSerializer
+
+  def list(self, request):
+    """
+    Return a hello message
+    """
+    a_viewset = [
+      'User Actions', 
+      'List', 
+      'Retrieve', 
+      'Automatically maps to URLS using Routers', 
+      'Provides more functionality with less code',
+    ]
+
+    return Response({'message': 'Hello!', 'a_viewset': a_viewset})
+
+  def create(self, request):
+    """
+    Creates a new a hello message
+    """
+    serializer = self.serializer_class(data=request.data)
+
+    if serializer.is_valid():
+      name = serializer.validated_data.get('name')
+      message = f'Hello {name}!'
+      return Response({"message": message})
+    else:
+      return Response(
+        serializer.errors,
+        status=status.HTTP_400_BAD_REQUEST
+      )
+
+
+  def retrieve(self, request, pk=None):
+    """
+    Handle getting object by It's ID
+    """
+    
+    return Response({'http_method': 'GET'})
+
+
+class UserProfileViewset(viewsets.ModelViewSet):
+  """
+  Handle Creating and updating profiles
+  """
+
+  serializer_class = serializers.UserProfileSerializer
+  queryset = models.UserProfile.objects.all()
+  authentication_classes = (TokenAuthentication,)
+  permission_classes = (permissions.UpdateOwnProfile,)
